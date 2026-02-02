@@ -13,6 +13,9 @@ dependencies = [
     "dpm @ git+https://github.com/splor-mg/dpm.git@main"
 ]
 
+[tool.taskipy.tasks]
+extract = { cmd = 'poetry run dpm install', help = 'Extrai recursos dos datapackages listados no arquivo data.toml.' }
+
 
 [tool.repo-template]
 upstream = 'https://github.com/ziguraty/repo-template.git'
