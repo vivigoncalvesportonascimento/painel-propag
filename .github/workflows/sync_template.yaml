@@ -1,0 +1,119 @@
+name: Sync template from upstream
+
+on:
+  schedule:
+    # At 00:00 on Monday (UTC)
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync_template_from_upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Set current date and time
+        id: date_step
+        run: |
+          echo "now=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
+
+      - name: Get job ID
+        id: job_id
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          JOB_ID=$(gh api \
+            /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+            --jq '.jobs[0].id')
+
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        uses: qoomon/actions--setup-git@v1
+
+      - name: Read upstream from pyproject.toml
+        id: upstream
+        run: |
+          python - <<'EOF'
+          import tomllib
+          from pathlib import Path
+          import os
+
+          data = tomllib.loads(Path("pyproject.toml").read_text())
+
+          tool = data.get("tool", {})
+          repo_template = tool.get("repo-template", {})
+          upstream = repo_template.get("upstream", "").strip()
+
+          has_upstream = bool(upstream)
+
+          github_output = os.environ["GITHUB_OUTPUT"]
+
+          with open(github_output, "a") as f:
+              f.write(f"has_upstream={str(has_upstream).lower()}\n")
+              if has_upstream:
+                  f.write(f"upstream={upstream}\n")
+          EOF
+
+      - name: Check for upstream changes
+        if: steps.upstream.outputs.has_upstream == 'true'
+        id: diff
+        run: |
+          git remote add upstream ${{ steps.upstream.outputs.upstream }} || true
+          git fetch upstream
+          if git log HEAD..upstream/main --oneline | grep .; then
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Merge upstream changes
+        if: >
+          steps.upstream.outputs.has_upstream == 'true' &&
+          steps.diff.outputs.changes == 'true'
+        run: |
+          git merge upstream/main --no-edit
+
+      - name: Create Pull Request
+        if: >
+          steps.upstream.outputs.has_upstream == 'true' &&
+          steps.diff.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          base: main
+          branch: sync-template
+          delete-branch: true
+          title: Sync template updates on ${{ steps.date_step.outputs.now }}
+          body: |
+            🤖 **Automated template sync**
+
+            This pull request was automatically created by the
+            **`${{ github.workflow }}`** workflow.
+
+            🔗 Run details:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ steps.job_id.outputs.job_id }}
+
+            📦 Source: `upstream/main`
+
+      - name: Record failure details on sync_template_failure.md
+        if: failure()
+        run: |
+          echo "Check the logs [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ steps.job_id.outputs.job_id }})." >> .github/sync_template_failure.md
+        shell: bash
+
+      - name: Workflow failure notification
+        uses: peter-evans/create-issue-from-file@v6
+        if: failure()
+        with:
+          title: Sync template workflow failed on ${{ steps.date_step.outputs.now }}
+          content-filepath: .github/sync_template_failure.md

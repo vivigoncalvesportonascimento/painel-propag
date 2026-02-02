@@ -1,0 +1,55 @@
+[project]
+name = 'repo-template-python'
+version = '0.1.0'
+description = ''
+authors = [
+    {name = 'Gabriel Dornas',email = 'gabrielbdornas@gmail.com'}
+]
+readme = 'README.md'
+requires-python = '>=3.13,<4.0'
+dependencies = [
+    'taskipy (>=1.14.1,<2.0.0)',
+    "python-dotenv (>=1.2.1,<2.0.0)"
+]
+
+
+[tool.repo-template]
+upstream = 'https://github.com/ziguraty/repo-template.git'
+
+
+[build-system]
+requires = ['poetry-core>=2.0.0,<3.0.0']
+build-backend = 'poetry.core.masonry.api'
+
+[dependency-groups]
+dev = [
+    'ipdb (>=0.13.13,<0.14.0)',
+    'pytest (>=9.0.2,<10.0.0)',
+    'pytest-cov (>=7.0.0,<8.0.0)',
+    'ruff (>=0.14.10,<0.15.0)'
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+[tool.pytest.ini_options]
+pythonpath = '.'
+addopts = '-p no:warnings'
+
+
+[tool.taskipy.tasks]
+list = { cmd = 'task --list', help = 'Lists all tasks.' }
+lint = { cmd = 'ruff check', help = 'Checks for good coding practices in Python.' }
+pre_format = { cmd = 'ruff check --fix', help = 'Makes some best practice corrections.' }
+format = { cmd = 'ruff format', help = 'Formats code according to code style conventions.' }
+pre_test = { cmd = 'task lint', help = 'Runs linters before running the tests.' }
+test = { cmd = 'pytest -s -x -vv', help = 'Runs unit tests.' }
+post_test = { cmd = 'coverage html', help = 'Generates a coverage report after the tests.' }
