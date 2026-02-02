@@ -1,0 +1,325 @@
+{
+  "name": "aux_classificadores",
+  "profile": "tabular-data-package",
+  "resources": [
+    {
+      "name": "acao",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/acao.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:635bc09f90b993d6113f116983b8e650894265067db9a5213effe081341b5755",
+      "bytes": 1094093,
+      "fields": 4,
+      "rows": 14910,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_acao",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "acao_cod",
+            "type": "integer"
+          },
+          {
+            "name": "acao_desc",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "acao_cod"
+        ]
+      }
+    },
+    {
+      "name": "elemento_item",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/elemento_item.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:94a4ac4b1341981ff067fcb3e78a4837f6ec227ef9b9264885ae7f9fe7387f46",
+      "bytes": 411073,
+      "fields": 4,
+      "rows": 7042,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_elemento_item",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "elemento_item_cod",
+            "type": "integer"
+          },
+          {
+            "name": "elemento_item_desc",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "elemento_item_cod"
+        ]
+      }
+    },
+    {
+      "name": "fonte_recurso",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/fonte_recurso.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:1769a493f93dcbceb4d54ba37a5bc0c7f85c6c2f9e9fd6da7e618f4f6f42ef7a",
+      "bytes": 61085,
+      "fields": 4,
+      "rows": 880,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_fonte_recurso",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "fonte_cod",
+            "type": "integer"
+          },
+          {
+            "name": "fonte_desc",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "fonte_cod"
+        ]
+      }
+    },
+    {
+      "name": "funcional_programatica",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/funcional_programatica.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:c0aa00e49db52cc3159f623480fc7dc07d02d34e8c1f4d5453b10a2e76ecfb9e",
+      "bytes": 4374640,
+      "fields": 11,
+      "rows": 19097,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_funcional_programatica",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "uo_cod",
+            "type": "integer"
+          },
+          {
+            "name": "funcao_cod",
+            "type": "integer"
+          },
+          {
+            "name": "funcao_desc",
+            "type": "string"
+          },
+          {
+            "name": "subfuncao_cod",
+            "type": "integer"
+          },
+          {
+            "name": "subfuncao_desc",
+            "type": "string"
+          },
+          {
+            "name": "programa_cod",
+            "type": "integer"
+          },
+          {
+            "name": "programa_desc",
+            "type": "string"
+          },
+          {
+            "name": "acao_cod",
+            "type": "integer"
+          },
+          {
+            "name": "acao_desc",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "uo_cod",
+          "acao_cod"
+        ]
+      }
+    },
+    {
+      "name": "natureza_receita",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/natureza_receita.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:a66fa6030b3a2267c3bc5424406aacba3dbe791ca63c0858541c8f02c33a43a9",
+      "bytes": 1011100,
+      "fields": 4,
+      "rows": 9322,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_natureza_receita",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "rec_cod",
+            "type": "integer"
+          },
+          {
+            "name": "rec_desc",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "rec_cod"
+        ]
+      }
+    },
+    {
+      "name": "uo",
+      "type": "table",
+      "profile": "tabular-data-resource",
+      "path": "data/uo.csv",
+      "scheme": "file",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "hash": "sha256:1f9959fcd2c1b7f237efd85eaaec39f0c9dbf32fccd975610c4528b6f2ff6a65",
+      "bytes": 269407,
+      "fields": 10,
+      "rows": 1802,
+      "dialect": {
+        "csv": {
+          "delimiter": ","
+        }
+      },
+      "schema": {
+        "fields": [
+          {
+            "name": "chave_uo",
+            "type": "string"
+          },
+          {
+            "name": "ano",
+            "type": "integer"
+          },
+          {
+            "name": "orgao_vinculacao_cod",
+            "type": "integer"
+          },
+          {
+            "name": "orgao_vinculacao_nome",
+            "type": "string"
+          },
+          {
+            "name": "poder_cod",
+            "type": "integer"
+          },
+          {
+            "name": "poder_desc",
+            "type": "string"
+          },
+          {
+            "name": "uo_cod",
+            "type": "integer"
+          },
+          {
+            "name": "uo_nome",
+            "type": "string"
+          },
+          {
+            "name": "uo_sigla",
+            "type": "string"
+          },
+          {
+            "name": "uo_sigla_current",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "ano",
+          "uo_cod"
+        ]
+      }
+    }
+  ],
+  "updated_at": "2026-02-02T10:14:29",
+  "remote": {
+    "host": "raw.githubusercontent.com",
+    "user": "splor-mg",
+    "repo": "dados-aux-classificadores",
+    "ref": "main",
+    "sha": "ec1aac3b159edf792f5618da4fd934f3b0ff614d"
+  }
+}
