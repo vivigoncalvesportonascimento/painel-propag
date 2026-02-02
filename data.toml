@@ -1,5 +1,6 @@
 [packages]
 
 [packages.siafi-2026]
-path = "https://raw.githubusercontent.com/splor-mg/dados-armazem-siafi-2026/refs/heads/main/datapackage.json?token=GHSAT0AAAAAADSTK4S5VGXKGGK3WKWWZJEQ2MATRKQ"
+path = "https://raw.githubusercontent.com/splor-mg/dados-armazem-siafi-2026/refs/heads/main/datapackage.json"
+token = "GH_TOKEN"
 
