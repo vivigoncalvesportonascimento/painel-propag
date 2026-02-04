@@ -5,11 +5,35 @@ from pathlib import Path
 from io import StringIO
 
 # ---------------------------------------------------------------------
-# Configuração da página
+# Configuração da página e CSS Personalizado
 # ---------------------------------------------------------------------
 st.set_page_config(
+    page_title="Painel Propag 2026",
     layout="wide",
+    initial_sidebar_state="collapsed"
 )
+
+# CSS para compactar a visualização e ajustar fontes
+st.markdown("""
+    <style>
+        /* Reduzir padding do topo para ganhar espaço */
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        /* Diminuir fonte das métricas */
+        div[data-testid="stMetricValue"] {
+            font-size: 1.1rem !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.8rem !important;
+        }
+        /* Ajustar fonte da tabela e outros textos */
+        .stDataFrame, p, .stMultiSelect {
+            font-size: 0.85rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------
 # Utilitários
@@ -17,7 +41,7 @@ st.set_page_config(
 
 
 def format_brl(x: float) -> str:
-    """Formata número como moeda pt-BR (R$ com vírgula decimal)."""
+    """Formata número como moeda pt-BR para exibição em Métricas (strings)."""
     try:
         s = f"{float(x):,.2f}"
         return "R$ " + s.replace(",", "X").replace(".", ",").replace("X", ".")
@@ -28,25 +52,19 @@ def format_brl(x: float) -> str:
 def to_csv_bytes(df: pd.DataFrame) -> bytes:
     """Converte DataFrame para CSV (UTF-8) em bytes para download."""
     buff = StringIO()
-    df.to_csv(buff, index=False, encoding="utf-8")
+    # Ao baixar, queremos o formato numérico puro ou formatado?
+    # Geralmente técnico prefere puro (ponto decimal), gestor prefere vírgula.
+    # Mantendo puro para facilitar reuso em Excel/PowerBI.
+    df.to_csv(buff, index=False, encoding="utf-8", sep=";")
     return buff.getvalue().encode("utf-8")
 
 
-def to_int64_safe(series: pd.Series) -> pd.Series:
-    """
-    Converte para inteiro nulo-tolerante (Int64) sem usar errors='ignore'.
-    Se a conversão não fizer sentido, retorna série original.
-    """
-    s = pd.to_numeric(series, errors="coerce")
-    # Se quase tudo vira NaN, mantenha original (evita quebrar colunas textuais por engano)
-    if s.notna().sum() == 0:
-        return series
-    return s.astype("Int64")
-
-
-def to_float_safe(series: pd.Series) -> pd.Series:
-    """Converte para float com coerce + fillna."""
-    return pd.to_numeric(series, errors="coerce").fillna(0.0).astype(float)
+def color_saldo(val):
+    """Lógica de cor para o Pandas Styler: Vermelho se negativo, Azul se positivo."""
+    if pd.isna(val):
+        return ""
+    color = "#e63946" if val < 0 else "#2a9d8f"
+    return f'color: {color}; font-weight: bold;'
 
 # ---------------------------------------------------------------------
 # Carregamento de dados
@@ -55,10 +73,6 @@ def to_float_safe(series: pd.Series) -> pd.Series:
 
 @st.cache_data(show_spinner=False)
 def load_data() -> pd.DataFrame:
-    """
-    Carrega a tabela final do ETL (preferência Parquet, fallback CSV).
-    Remove 'Fonte (desc)' se existir e garante tipos.
-    """
     p_parquet = Path("data-processed/tbl_limite_liquidado_2026.parquet")
     p_csv = Path("data-processed/tbl_limite_liquidado_2026.csv")
 
@@ -67,83 +81,74 @@ def load_data() -> pd.DataFrame:
     elif p_csv.exists():
         df = pd.read_csv(p_csv, encoding="utf-8")
     else:
-        st.error(
-            "Arquivo processado não encontrado em **data-processed/**. "
-            "Rode antes o ETL: `poetry run build-tbl-limite-liquidado`."
-        )
+        st.error("⚠️ Arquivo não encontrado. Rode o ETL primeiro.")
         st.stop()
 
-    # Remover 'Fonte (desc)' se existir
     if "Fonte (desc)" in df.columns:
         df = df.drop(columns=["Fonte (desc)"])
 
-    # Seleção/ordem de colunas esperadas
-    cols = [
-        "Ano", "UO cod", "UO sigla", "Fonte",
-        "IPU", "Limite Propag 2026", "Liquidado 2026", "Saldo de limite",
-    ]
-    missing = [c for c in cols if c not in df.columns]
-    if missing:
-        st.error("Colunas esperadas não encontradas: " + ", ".join(missing))
-        st.stop()
+    # Conversão segura de tipos
+    for col in ["Ano", "UO cod", "Fonte", "IPU"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
 
-    # Tipos (sem errors='ignore')
-    df["Ano"] = to_int64_safe(df["Ano"])
-    df["UO cod"] = to_int64_safe(df["UO cod"])
-    df["Fonte"] = to_int64_safe(df["Fonte"])
-    df["IPU"] = to_int64_safe(df["IPU"])
+    cols_float = ["Limite Propag 2026", "Liquidado 2026", "Saldo de limite"]
+    for col in cols_float:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
 
-    for m in ["Limite Propag 2026", "Liquidado 2026", "Saldo de limite"]:
-        df[m] = to_float_safe(df[m])
+    # Criar coluna de % Execução para barra de progresso (0 a 1)
+    # Evitar divisão por zero
+    df["% Exec"] = df.apply(
+        lambda row: row["Liquidado 2026"] / row["Limite Propag 2026"]
+        if row["Limite Propag 2026"] > 0 else 0.0, axis=1
+    )
 
-    return df[cols].copy()
+    return df
 
 
 # ---------------------------------------------------------------------
-# App
+# App Principal
 # ---------------------------------------------------------------------
-st.markdown("### Progag Investimentos - Limite vs Liquidado")
+st.title("Propag Investimentos: Monitoramento de Limites")
 
-
-# Botão para recarregar os dados (limpa cache)
-cols_header = st.columns([1, 5])
-with cols_header[0]:
-    if st.button("🔄 Recarregar dados"):
-        st.cache_data.clear()
+# Botão de recarga discreto no canto
+if st.button("🔄 Atualizar", help="Limpa o cache e recarrega os dados"):
+    st.cache_data.clear()
+    st.rerun()
 
 df = load_data()
 
 # -----------------------------
-# Filtros
+# 1. Painel de Filtros (Expansível para economizar espaço)
 # -----------------------------
-flt_cols = st.columns(5)
+with st.expander("🔎 Filtros Avançados", expanded=True):
+    flt_cols = st.columns(5)
 
-with flt_cols[0]:
-    anos = sorted(
-        [a for a in df["Ano"].dropna().unique().tolist() if pd.notna(a)])
-    # Se houver 2026, selecione-o por padrão; senão, primeiro da lista
-    default_idx = anos.index(2026) if 2026 in anos else 0
-    sel_ano = st.selectbox("Ano", options=anos,
-                           index=default_idx if anos else 0)
+    with flt_cols[0]:
+        anos = sorted(df["Ano"].unique())
+        idx_ano = anos.index(2026) if 2026 in anos else 0
+        sel_ano = st.selectbox("Ano", options=anos, index=idx_ano)
 
-with flt_cols[1]:
-    uos = sorted(df["UO cod"].dropna().unique().tolist())
-    sel_uo_cod = st.multiselect("UO cod", options=uos, default=[])
+    # Filtragem preliminar pelo Ano para otimizar as listas seguintes
+    df_ano = df[df["Ano"] == sel_ano]
 
-with flt_cols[2]:
-    uo_siglas = sorted(df["UO sigla"].dropna().unique().tolist())
-    sel_uo_sigla = st.multiselect("UO sigla", options=uo_siglas, default=[])
+    with flt_cols[1]:
+        uos = sorted(df_ano["UO cod"].unique())
+        sel_uo_cod = st.multiselect("UO (Cód)", options=uos)
 
-with flt_cols[3]:
-    fontes = sorted(df["Fonte"].dropna().unique().tolist())
-    sel_fonte = st.multiselect("Fonte", options=fontes, default=[])
+    with flt_cols[2]:
+        uo_siglas = sorted(df_ano["UO sigla"].dropna().unique())
+        sel_uo_sigla = st.multiselect("UO (Sigla)", options=uo_siglas)
 
-with flt_cols[4]:
-    ipus = sorted(df["IPU"].dropna().unique().tolist())
-    sel_ipu = st.multiselect("IPU", options=ipus, default=[])
+    with flt_cols[3]:
+        fontes = sorted(df_ano["Fonte"].unique())
+        sel_fonte = st.multiselect("Fonte", options=fontes)
 
-# Aplicar filtros
-df_f = df.query("Ano == @sel_ano").copy()
+    with flt_cols[4]:
+        ipus = sorted(df_ano["IPU"].unique())
+        sel_ipu = st.multiselect("IPU", options=ipus)
+
+# Aplicação dos filtros
+df_f = df_ano.copy()
 if sel_uo_cod:
     df_f = df_f[df_f["UO cod"].isin(sel_uo_cod)]
 if sel_uo_sigla:
@@ -154,37 +159,82 @@ if sel_ipu:
     df_f = df_f[df_f["IPU"].isin(sel_ipu)]
 
 # -----------------------------
-# Tabela (formatada em pt-BR)
+# 2. KPIs (Indicadores no Topo)
 # -----------------------------
-df_show = df_f.copy()
-for c in ["Limite Propag 2026", "Liquidado 2026", "Saldo de limite"]:
-    df_show[c] = df_show[c].apply(format_brl)
+# Estilo de container para destacar os totais
+kpi_cols = st.columns(4)
 
-# Substitui use_container_width=True -> width="stretch"
+total_limite = df_f["Limite Propag 2026"].sum()
+total_liquidado = df_f["Liquidado 2026"].sum()
+total_saldo = df_f["Saldo de limite"].sum()
+pct_global = (total_liquidado / total_limite) if total_limite > 0 else 0
+
+with kpi_cols[0]:
+    st.metric("Registros Filtrados", f"{len(df_f)}")
+with kpi_cols[1]:
+    st.metric("Limite Total", format_brl(total_limite))
+with kpi_cols[2]:
+    st.metric("Liquidado Total", format_brl(total_liquidado),
+              delta=f"{pct_global:.1%} executado", delta_color="off")
+with kpi_cols[3]:
+    # Delta colorido invertido (se saldo cair muito é ruim, mas aqui saldo positivo é normal)
+    # Vamos usar cor normal. Se negativo, o próprio texto indicará.
+    st.metric("Saldo Disponível", format_brl(total_saldo),
+              delta_color="normal")
+
+st.divider()
+
+# -----------------------------
+# 3. Tabela de Dados (Dataframe)
+# -----------------------------
+
+# Configuração de colunas para o st.dataframe
+column_cfg = {
+    "Ano": st.column_config.NumberColumn("Ano", format="%d", width="small"),
+    "UO cod": st.column_config.NumberColumn("UO", format="%d", width="small"),
+    "UO sigla": st.column_config.TextColumn("Sigla", width="small"),
+    "Fonte": st.column_config.NumberColumn("Fonte", format="%d", width="small"),
+    "IPU": st.column_config.NumberColumn("IPU", format="%d", width="small"),
+    # Formatação nativa de moeda (pt-BR requer workaround ou string,
+    # mas o format do streamlit "R$ %.2f" ajuda na ordenação numérica)
+    "Limite Propag 2026": st.column_config.NumberColumn(
+        "Limite", format="R$ %.2f", width="medium"
+    ),
+    "Liquidado 2026": st.column_config.NumberColumn(
+        "Liquidado", format="R$ %.2f", width="medium"
+    ),
+    "Saldo de limite": st.column_config.NumberColumn(
+        "Saldo", format="R$ %.2f", width="medium"
+    ),
+    "% Exec": st.column_config.ProgressColumn(
+        "Execução", min_value=0, max_value=1, format="%.1f%%"
+    ),
+}
+
+# Aplicar estilo condicional (cores) usando Pandas Styler
+# Nota: formatamos o dataframe para visualização, mas mantemos os dados numéricos por baixo
+styler = df_f.style.format({
+    "Limite Propag 2026": "R$ {:,.2f}",
+    "Liquidado 2026": "R$ {:,.2f}",
+    "Saldo de limite": "R$ {:,.2f}",
+    "% Exec": "{:.1%}"
+}, thousands=".", decimal=",").applymap(color_saldo, subset=["Saldo de limite"])
+
 st.dataframe(
-    df_show,
-    width="stretch",
+    styler,
+    column_config=column_cfg,
+    use_container_width=True,
     hide_index=True,
+    height=500  # Altura fixa para evitar scroll infinito da página inteira
 )
 
 # -----------------------------
-# Resumo e download
+# Download
 # -----------------------------
-col_a, col_b, col_c, col_d = st.columns([1, 1, 1, 2])
-
-with col_a:
-    st.metric("Registros", f"{len(df_f):,}".replace(",", "."))
-with col_b:
-    st.metric("Limite Propag 2026", format_brl(
-        df_f["Limite Propag 2026"].sum()))
-with col_c:
-    st.metric("Liquidado 2026", format_brl(df_f["Liquidado 2026"].sum()))
-with col_d:
-    st.metric("Saldo de limite", format_brl(df_f["Saldo de limite"].sum()))
-
 st.download_button(
-    label="⬇️ Baixar recorte (CSV)",
+    label="⬇️ Baixar Dados Filtrados (.csv)",
     data=to_csv_bytes(df_f),
-    file_name="tbl_limite_liquidado_2026_filtrado.csv",
+    file_name="monitoramento_propag_2026.csv",
     mime="text/csv",
+    help="Baixa a tabela exibida acima em formato CSV separado por ponto-e-vírgula"
 )
