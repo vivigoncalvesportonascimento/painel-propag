@@ -1,0 +1,29 @@
+fields:
+  - name: ano
+    type: integer
+  - name: uo_cod
+    type: integer
+  - name: uo_sigla
+    type: string
+  - name: funcao_cod
+    type: integer
+  - name: programa_cod
+    type: integer
+  - name: programa_desc
+    type: string
+  - name: acao_cod
+    type: integer
+  - name: acao_desc
+    type: string
+  - name: grupo_cod
+    type: integer
+  - name: iag_cod
+    type: integer
+  - name: fonte_cod
+    type: integer
+  - name: ipu_cod
+    type: integer
+  - name: mensagem_limite
+    type: string
+  - name: limite_propag
+    type: string

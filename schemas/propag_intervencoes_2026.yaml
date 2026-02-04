@@ -1,0 +1,19 @@
+fields:
+  - name: ano
+    type: integer
+  - name: uo_cod
+    type: integer
+  - name: uo_sigla
+    type: string
+  - name: acao_cod
+    type: integer
+  - name: acao_desc
+    type: string
+  - name: intervencao
+    type: string
+  - name: marcos_principais
+    type: string
+  - name: valor_plano
+    type: string
+  - name: obs
+    type: string

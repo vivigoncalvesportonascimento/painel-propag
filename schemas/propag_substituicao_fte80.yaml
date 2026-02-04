@@ -1,0 +1,13 @@
+fields:
+  - name: iniciativa_acordo
+    type: string
+  - name: empreendimento_acordo
+    type: string
+  - name: limite_total_acordo_fte80
+    type: string
+  - name: vlr_empenhado_2025
+    type: string
+  - name: saldo_limite_acordo_fte80
+    type: string
+  - name: previsao_liquidacao_2026
+    type: integer
