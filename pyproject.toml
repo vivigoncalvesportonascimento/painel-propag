@@ -44,6 +44,8 @@ quote-style = 'single'
 pythonpath = '.'
 addopts = '-p no:warnings'
 
+[tool.poetry]
+package-mode = false
 
 [tool.taskipy.tasks]
 list = { cmd = 'task --list', help = 'Lists all tasks.' }
