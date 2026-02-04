@@ -25,9 +25,40 @@ def format_brl(x: float) -> str:
         return "R$ 0,00"
 
 
+def to_csv_bytes(df: pd.DataFrame) -> bytes:
+    """Converte DataFrame para CSV (UTF-8) em bytes para download."""
+    buff = StringIO()
+    df.to_csv(buff, index=False, encoding="utf-8")
+    return buff.getvalue().encode("utf-8")
+
+
+def to_int64_safe(series: pd.Series) -> pd.Series:
+    """
+    Converte para inteiro nulo-tolerante (Int64) sem usar errors='ignore'.
+    Se a conversão não fizer sentido, retorna série original.
+    """
+    s = pd.to_numeric(series, errors="coerce")
+    # Se quase tudo vira NaN, mantenha original (evita quebrar colunas textuais por engano)
+    if s.notna().sum() == 0:
+        return series
+    return s.astype("Int64")
+
+
+def to_float_safe(series: pd.Series) -> pd.Series:
+    """Converte para float com coerce + fillna."""
+    return pd.to_numeric(series, errors="coerce").fillna(0.0).astype(float)
+
+# ---------------------------------------------------------------------
+# Carregamento de dados
+# ---------------------------------------------------------------------
+
+
 @st.cache_data(show_spinner=False)
 def load_data() -> pd.DataFrame:
-    """Carrega a tabela final do ETL (preferência Parquet, fallback CSV)."""
+    """
+    Carrega a tabela final do ETL (preferência Parquet, fallback CSV).
+    Remove 'Fonte (desc)' se existir e garante tipos.
+    """
     p_parquet = Path("data-processed/tbl_limite_liquidado_2026.parquet")
     p_csv = Path("data-processed/tbl_limite_liquidado_2026.csv")
 
@@ -42,60 +73,58 @@ def load_data() -> pd.DataFrame:
         )
         st.stop()
 
-    # Remover 'Fonte (desc)' se existir, mantendo somente os campos desejados
+    # Remover 'Fonte (desc)' se existir
     if "Fonte (desc)" in df.columns:
         df = df.drop(columns=["Fonte (desc)"])
 
-    # Garantir a ordem/seleção de colunas
+    # Seleção/ordem de colunas esperadas
     cols = [
         "Ano", "UO cod", "UO sigla", "Fonte",
         "IPU", "Limite Propag 2026", "Liquidado 2026", "Saldo de limite",
     ]
-    # Validação simples (para evitar KeyError caso haja variações)
     missing = [c for c in cols if c not in df.columns]
     if missing:
-        st.error(
-            "Colunas esperadas não encontradas: "
-            + ", ".join(missing)
-            + ". Verifique o ETL e os nomes gerados."
-        )
+        st.error("Colunas esperadas não encontradas: " + ", ".join(missing))
         st.stop()
 
-    # Tipos
-    for c in ["Ano", "UO cod", "Fonte", "IPU"]:
-        df[c] = pd.to_numeric(df[c], errors="ignore")
+    # Tipos (sem errors='ignore')
+    df["Ano"] = to_int64_safe(df["Ano"])
+    df["UO cod"] = to_int64_safe(df["UO cod"])
+    df["Fonte"] = to_int64_safe(df["Fonte"])
+    df["IPU"] = to_int64_safe(df["IPU"])
 
-    # As métricas devem ser numéricas
     for m in ["Limite Propag 2026", "Liquidado 2026", "Saldo de limite"]:
-        df[m] = pd.to_numeric(df[m], errors="coerce").fillna(0.0)
+        df[m] = to_float_safe(df[m])
 
-    # Reordenar e retornar
     return df[cols].copy()
-
-
-def to_csv_bytes(df: pd.DataFrame) -> bytes:
-    """Converte DataFrame para CSV (UTF-8) em bytes para download."""
-    buff = StringIO()
-    df.to_csv(buff, index=False, encoding="utf-8")
-    return buff.getvalue().encode("utf-8")
 
 
 # ---------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------
-st.markdown("#### Propag - Limite vs Liquidado")
+st.markdown("### Progag Investimentos - Limite vs Liquidado")
 
+
+# Botão para recarregar os dados (limpa cache)
+cols_header = st.columns([1, 5])
+with cols_header[0]:
+    if st.button("🔄 Recarregar dados"):
+        st.cache_data.clear()
 
 df = load_data()
 
 # -----------------------------
-# Filtros (multiselects + selectbox)
+# Filtros
 # -----------------------------
 flt_cols = st.columns(5)
 
 with flt_cols[0]:
-    anos = sorted(df["Ano"].dropna().unique().tolist())
-    sel_ano = st.selectbox("Ano", options=anos, index=0)
+    anos = sorted(
+        [a for a in df["Ano"].dropna().unique().tolist() if pd.notna(a)])
+    # Se houver 2026, selecione-o por padrão; senão, primeiro da lista
+    default_idx = anos.index(2026) if 2026 in anos else 0
+    sel_ano = st.selectbox("Ano", options=anos,
+                           index=default_idx if anos else 0)
 
 with flt_cols[1]:
     uos = sorted(df["UO cod"].dropna().unique().tolist())
@@ -131,9 +160,10 @@ df_show = df_f.copy()
 for c in ["Limite Propag 2026", "Liquidado 2026", "Saldo de limite"]:
     df_show[c] = df_show[c].apply(format_brl)
 
+# Substitui use_container_width=True -> width="stretch"
 st.dataframe(
     df_show,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 
