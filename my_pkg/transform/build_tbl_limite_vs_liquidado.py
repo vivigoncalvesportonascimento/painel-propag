@@ -1,69 +1,223 @@
 # my_pkg/transform/build_tbl_limite_vs_liquidado.py
 # -*- coding: utf-8 -*-
+"""
+Gera a tabela 'tbl_limite_liquidado_2026' no grão:
+(ano=2026, uo_cod, fonte_cod, ipu_cod)
+
+Colunas de saída:
+- Ano
+- UO cod
+- UO sigla
+- Fonte
+- IPU
+- Limite Propag 2026          (limites do Propag)
+- Liquidado 2026              (execução 2026 + RP não processado liquidado em 2026)
+- Saldo de limite             (Limite - Liquidado)
+
+Regras de negócio/filtro:
+- Incluir somente linhas com (fonte_cod == 89) OU (ipu_cod == 0).
+
+Arquivos (sem mover pastas):
+- Limites: data-raw/propag_investimentos_limite_2026.csv
+- SIAFI (procura automaticamente em múltiplas pastas):
+    execucao.csv.gz, restos_pagar.csv.gz
+- Dimensões (procura automaticamente em múltiplas pastas):
+    uo.csv, fonte_recurso.csv (opcional)
+
+Saídas:
+- data-processed/tbl_limite_liquidado_2026.parquet (se houver backend)
+- data-processed/tbl_limite_liquidado_2026.csv
+
+Rodar:
+    poetry run build-tbl-limite-liquidado
+ou
+    poetry run python -m my_pkg.transform.build_tbl_limite_vs_liquidado
+"""
+
 from __future__ import annotations
 import os
+import glob
 import hashlib
+import warnings
+from typing import List
 import pandas as pd
 
+# ---------------------------------------------------------------------
+# Configurações
+# ---------------------------------------------------------------------
+ANO_ALVO = 2026
 DATA_RAW = "data-raw"
-DATA_DIR = "data"
 OUT_DIR = "data-processed"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-ANO_ALVO = 2026
+# Diretórios onde procuraremos os arquivos SEM você precisar mudar pastas
+DATA_DIRS = [
+    # raiz “canônica”
+    "data",
+    # estrutura que você mostrou no print
+    os.path.join("datapackages", "siafi-2026", "data"),
+    os.path.join("datapackages", "aux-classificadores", "data"),
+    # variações comuns (caso existam)
+    os.path.join("siafi-2026", "data"),
+    os.path.join("aux-classificadores", "data"),
+]
+
+# ---------------------------------------------------------------------
+# Utilitários de I/O e qualidade
+# ---------------------------------------------------------------------
+
+
+def find_existing(*filenames: str) -> str:
+    """
+    Retorna o primeiro caminho existente para qualquer um dos filenames
+    nos diretórios de DATA_DIRS. Caso não encontre, faz uma busca
+    recursiva sob 'datapackages/**/data/<filename>'.
+    """
+    # Passo 1: checagem direta nas pastas conhecidas
+    for d in DATA_DIRS:
+        for name in filenames:
+            p = os.path.join(d, name)
+            if os.path.exists(p):
+                return p
+
+    # Passo 2: busca recursiva dentro de 'datapackages/**/data/<filename>'
+    for name in filenames:
+        pattern = os.path.join("datapackages", "**", "data", name)
+        matches = glob.glob(pattern, recursive=True)
+        for m in matches:
+            if os.path.exists(m):
+                return m
+
+    # Se nada foi encontrado, informe claramente onde buscamos
+    raise FileNotFoundError(
+        "Arquivo(s) não encontrado(s):\n - {}\nProcurado em:\n - {}\nBusca recursiva: 'datapackages/**/data/<arquivo>'".format(
+            "\n - ".join(filenames),
+            "\n - ".join(DATA_DIRS),
+        )
+    )
 
 
 def aplica_filtro_negocio(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Mantém apenas linhas com fonte_cod=89 OU ipu_cod=0.
+    Em bases que não tenham ipu_cod, cria com NA e aplica o filtro.
+    """
+    if "fonte_cod" not in df.columns:
+        return df.iloc[0:0].copy()
     if "ipu_cod" not in df.columns:
         df = df.assign(ipu_cod=pd.NA)
     return df.loc[(df["fonte_cod"] == 89) | (df["ipu_cod"] == 0)].copy()
 
 
 def parse_moeda_series(s: pd.Series) -> pd.Series:
-    if s.dtype in ("float64", "int64"):
+    """
+    Converte strings de moeda brasileiras (ex.: "1.234.567,89") ou
+    formatos mistos em float. Valores inválidos viram 0.0.
+    """
+    if pd.api.types.is_numeric_dtype(s):
         return s.astype(float)
-    s = s.astype(str).str.replace(r"[^0-9,.\-]", "", regex=True)
-    s = s.str.replace(r"\.", "", regex=True).str.replace(",", ".", regex=False)
+    s = (
+        s.astype(str)
+         .str.replace(r"[^0-9,.\-]", "", regex=True)
+         .str.replace(r"\.", "", regex=True)
+         .str.replace(",", ".", regex=False)
+    )
     return pd.to_numeric(s, errors="coerce").fillna(0.0)
 
 
 def make_sk_link(ano: pd.Series, uo: pd.Series, fonte: pd.Series, ipu: pd.Series) -> pd.Series:
+    """
+    Gera chave substituta determinística (hash) para a combinação (ano|uo|fonte|ipu).
+    """
     key = (ano.astype(str) + "|" + uo.astype(str) + "|" +
            fonte.astype(str) + "|" + ipu.astype(str))
     return key.apply(lambda x: hashlib.sha1(x.encode("utf-8")).hexdigest())
 
 
+def format_brl(x: float) -> str:
+    """
+    Formata valores no estilo PT-BR rapidamente (sem depender de locale do SO).
+    """
+    s = f"{x:,.2f}"
+    return s.replace(",", "X").replace(".", ",").replace("X", ".")
+
+# ---------------------------------------------------------------------
+# Leitura robusta do CSV de limites
+# ---------------------------------------------------------------------
+
+
+def read_csv_robusto(path: str, prefer_utf: bool = True, sniff_sep: bool = True, usecols: List[str] | None = None) -> pd.DataFrame:
+    """
+    Lê CSV lidando com:
+    - BOM/UTF-8 (utf-8-sig) e fallback cp1252
+    - sniff de delimitador (sep=None, engine='python')
+    """
+    encs = ["utf-8-sig", "utf-8",
+            "cp1252"] if prefer_utf else ["cp1252", "utf-8-sig", "utf-8"]
+    last_err = None
+    for enc in encs:
+        try:
+            if sniff_sep:
+                return pd.read_csv(path, encoding=enc, sep=None, engine="python", usecols=usecols)
+            return pd.read_csv(path, encoding=enc, usecols=usecols)
+        except Exception as e:
+            last_err = e
+    raise last_err
+
+# ---------------------------------------------------------------------
+# Loaders das bases
+# ---------------------------------------------------------------------
+
+
 def load_limite_propag_2026() -> pd.DataFrame:
-    import os
+    """
+    Limites do Propag 2026.
+    Arquivo: data-raw/propag_investimentos_limite_2026.csv
+    Campos relevantes: ano, uo_cod, uo_sigla, fonte_cod, ipu_cod, limite_propag (texto)
+    """
     path = os.path.join(DATA_RAW, "propag_investimentos_limite_2026.csv")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"Arquivo não encontrado: {path}\n"
+            f"Verifique se o CSV de limites está em {DATA_RAW}/"
+        )
 
-    # lê farejando o separador (',' ou ';') e aceita BOM/UTF-8
-    df = pd.read_csv(path, sep=None, engine="python", encoding="utf-8-sig")
+    # Lê farejando separador e aceitando BOM (se houver).
+    df = read_csv_robusto(path, prefer_utf=True, sniff_sep=True)
 
-    # garantias mínimas
+    # Checagem mínima de colunas
     cols_needed = ["ano", "uo_cod", "uo_sigla",
                    "fonte_cod", "ipu_cod", "limite_propag"]
     missing = [c for c in cols_needed if c not in df.columns]
     if missing:
         raise ValueError(
-            f"Colunas ausentes em limites: {missing}\nColunas lidas: {list(df.columns)}\nArquivo: {path}"
+            f"Colunas ausentes em limites: {missing}\n"
+            f"Colunas lidas: {list(df.columns)}\n"
+            f"Arquivo: {path}"
         )
 
-    # filtro de negócio (fonte=89 ou ipu=0) e ano alvo
+    # Filtro de negócio + ano
     df = aplica_filtro_negocio(df)
     df = df.loc[df["ano"] == ANO_ALVO].copy()
 
-    # converter limite (texto) para número
+    # Converter limite para número
     df["limite_propag"] = parse_moeda_series(df["limite_propag"])
 
-    # agrega no grão (ano, uo_cod, fonte_cod, ipu_cod)
-    grp = (df.groupby(["ano", "uo_cod", "fonte_cod", "ipu_cod"], as_index=False, dropna=False)
-           ["limite_propag"].sum())
+    # Agregar no grão
+    grp = (
+        df.groupby(["ano", "uo_cod", "fonte_cod", "ipu_cod"],
+                   as_index=False, dropna=False)["limite_propag"]
+        .sum()
+    )
     return grp
 
 
 def load_execucao_2026() -> pd.DataFrame:
-    path = os.path.join(DATA_DIR, "execucao.csv.gz")
+    """
+    Execução SIAFI 2026: somatório de vlr_liquidado no exercício.
+    Procura por: data/execucao.csv.gz, datapackages/**/data/execucao.csv.gz, etc.
+    """
+    path = find_existing("execucao.csv.gz")
     usecols = ["ano", "uo_cod", "fonte_cod", "ipu_cod", "vlr_liquidado"]
     df = pd.read_csv(path, compression="gzip",
                      usecols=usecols, encoding="utf-8")
@@ -75,7 +229,11 @@ def load_execucao_2026() -> pd.DataFrame:
 
 
 def load_restos_rpnp_liquidado_2026() -> pd.DataFrame:
-    path = os.path.join(DATA_DIR, "restos_pagar.csv.gz")
+    """
+    Restos a Pagar SIAFI 2026: somatório de vlr_despesa_liquidada_rpnp no exercício.
+    Procura por: data/restos_pagar.csv.gz, datapackages/**/data/restos_pagar.csv.gz, etc.
+    """
+    path = find_existing("restos_pagar.csv.gz")
     usecols = ["ano", "uo_cod", "fonte_cod",
                "ipu_cod", "vlr_despesa_liquidada_rpnp"]
     df = pd.read_csv(path, compression="gzip",
@@ -88,19 +246,35 @@ def load_restos_rpnp_liquidado_2026() -> pd.DataFrame:
 
 
 def load_dim_uo() -> pd.DataFrame:
-    path = os.path.join(DATA_DIR, "uo.csv")
-    usecols = ["ano", "uo_cod", "uo_sigla"]
-    df = pd.read_csv(path, usecols=usecols, encoding="utf-8")
+    """
+    Dimensão UO: procura por uo.csv nas pastas suportadas.
+    Campos: ano, uo_cod, uo_sigla
+    """
+    path = find_existing("uo.csv")
+    df = pd.read_csv(
+        path, usecols=["ano", "uo_cod", "uo_sigla"], encoding="utf-8")
     return df.drop_duplicates(subset=["ano", "uo_cod"])
 
 
 def load_dim_fonte() -> pd.DataFrame:
-    path = os.path.join(DATA_DIR, "fonte_recurso.csv")
-    usecols = ["ano", "fonte_cod", "fonte_desc"]
-    if not os.path.exists(path):
-        return pd.DataFrame(columns=usecols)
-    df = pd.read_csv(path, usecols=usecols, encoding="utf-8")
+    """
+    Dimensão Fonte (opcional): procura por fonte_recurso.csv.
+    Campos: ano, fonte_cod, fonte_desc
+    """
+    try:
+        path = find_existing("fonte_recurso.csv")
+    except FileNotFoundError:
+        warnings.warn(
+            "Dimensão 'fonte_recurso.csv' não encontrada — seguiremos sem a descrição da fonte.")
+        return pd.DataFrame(columns=["ano", "fonte_cod", "fonte_desc"])
+
+    df = pd.read_csv(
+        path, usecols=["ano", "fonte_cod", "fonte_desc"], encoding="utf-8")
     return df.drop_duplicates(subset=["ano", "fonte_cod"])
+
+# ---------------------------------------------------------------------
+# Construção da Link Table e da tabela final
+# ---------------------------------------------------------------------
 
 
 def build_link_table(df_lim: pd.DataFrame, df_exec: pd.DataFrame, df_rpnp: pd.DataFrame) -> pd.DataFrame:
@@ -114,38 +288,54 @@ def build_link_table(df_lim: pd.DataFrame, df_exec: pd.DataFrame, df_rpnp: pd.Da
 
 
 def build_table() -> pd.DataFrame:
+    # Carrega fatos
     df_lim = load_limite_propag_2026()
     df_exec = load_execucao_2026()
     df_rpnp = load_restos_rpnp_liquidado_2026()
 
+    # Cria link table
     link = build_link_table(df_lim, df_exec, df_rpnp)
 
-    tbl = (link
-           .merge(df_lim,  on=["ano", "uo_cod", "fonte_cod", "ipu_cod"], how="left")
-           .merge(df_exec, on=["ano", "uo_cod", "fonte_cod", "ipu_cod"], how="left")
-           .merge(df_rpnp, on=["ano", "uo_cod", "fonte_cod", "ipu_cod"], how="left"))
+    # Junta métricas
+    tbl = link.merge(df_lim,  on=["ano", "uo_cod",
+                     "fonte_cod", "ipu_cod"], how="left")
+    tbl = tbl.merge(df_exec, on=["ano", "uo_cod",
+                    "fonte_cod", "ipu_cod"], how="left")
+    tbl = tbl.merge(df_rpnp, on=["ano", "uo_cod",
+                    "fonte_cod", "ipu_cod"], how="left")
 
+    # Preencher métricas ausentes com 0
     for col in ["limite_propag", "vlr_liquidado", "vlr_despesa_liquidada_rpnp"]:
         if col in tbl.columns:
             tbl[col] = tbl[col].fillna(0.0)
 
+    # Cálculos finais
     tbl["liquidado_2026"] = tbl["vlr_liquidado"] + \
         tbl["vlr_despesa_liquidada_rpnp"]
     tbl["saldo_limite"] = tbl["limite_propag"] - tbl["liquidado_2026"]
 
+    # Dimensões
     dim_uo = load_dim_uo()
-    tbl = tbl.merge(dim_uo, on=["ano", "uo_cod"], how="left")
-
     dim_fonte = load_dim_fonte()
+
+    tbl = tbl.merge(dim_uo, on=["ano", "uo_cod"], how="left")
     if not dim_fonte.empty:
         tbl = tbl.merge(dim_fonte, on=["ano", "fonte_cod"], how="left")
 
-    cols_final = ["ano", "uo_cod", "uo_sigla", "fonte_cod", "ipu_cod",
-                  "limite_propag", "liquidado_2026", "saldo_limite"]
+    # Selecionar/ordenar colunas
+    cols_final = [
+        "ano", "uo_cod", "uo_sigla",
+        "fonte_cod",
+        "ipu_cod",
+        "limite_propag", "liquidado_2026", "saldo_limite",
+    ]
     if "fonte_desc" in tbl.columns:
-        cols_final.insert(4, "fonte_desc")
+        cols_final = ["ano", "uo_cod", "uo_sigla", "fonte_cod", "fonte_desc",
+                      "ipu_cod", "limite_propag", "liquidado_2026", "saldo_limite"]
 
     tbl_final = tbl[cols_final].copy()
+
+    # Renomeia para cabeçalhos “humanizados”
     rename_map = {
         "ano": "Ano",
         "uo_cod": "UO cod",
@@ -158,6 +348,8 @@ def build_table() -> pd.DataFrame:
         "saldo_limite": "Saldo de limite",
     }
     tbl_final = tbl_final.rename(columns=rename_map)
+
+    # Ordenação amigável
     sort_cols = ["Ano", "UO cod", "Fonte", "IPU"]
     tbl_final = tbl_final.sort_values(
         sort_cols, kind="stable").reset_index(drop=True)
@@ -166,14 +358,33 @@ def build_table() -> pd.DataFrame:
 
 def main():
     df = build_table()
+
+    # Salvar Parquet (se possível) + CSV sempre
     out_parquet = os.path.join(OUT_DIR, "tbl_limite_liquidado_2026.parquet")
     out_csv = os.path.join(OUT_DIR, "tbl_limite_liquidado_2026.csv")
-    df.to_parquet(out_parquet, index=False)
+
+    parquet_ok = False
+    try:
+        df.to_parquet(out_parquet, index=False)
+        parquet_ok = True
+    except Exception as e:
+        warnings.warn(
+            f"Não foi possível gravar Parquet ({e}). "
+            f"Se desejar Parquet, instale um backend (ex.: 'poetry add pyarrow')."
+        )
+
     df.to_csv(out_csv, index=False, encoding="utf-8")
+
+    # Resumo no console
     print("Registros:", len(df))
-    print("Total Limite:", df["Limite Propag 2026"].sum())
-    print("Total Liquidado 2026:", df["Liquidado 2026"].sum())
-    print("Total Saldo:", df["Saldo de limite"].sum())
+    print("Total Limite:          ", format_brl(
+        df["Limite Propag 2026"].sum()))
+    print("Total Liquidado 2026:  ", format_brl(df["Liquidado 2026"].sum()))
+    print("Total Saldo:           ", format_brl(df["Saldo de limite"].sum()))
+    if parquet_ok:
+        print(f"\nArquivos salvos em:\n - {out_parquet}\n - {out_csv}")
+    else:
+        print(f"\nArquivo salvo em:\n - {out_csv}")
 
 
 if __name__ == "__main__":
