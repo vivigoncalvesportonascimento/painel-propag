@@ -1,5 +1,5 @@
 [project]
-name = 'repo-template-python'
+name = 'painel-propag'
 version = '0.1.0'
 description = ''
 authors = [
@@ -10,7 +10,8 @@ requires-python = '>=3.13,<4.0'
 dependencies = [
     'taskipy (>=1.14.1,<2.0.0)',
     "python-dotenv (>=1.2.1,<2.0.0)",
-    "dpm @ git+https://github.com/splor-mg/dpm.git@main"
+    "dpm @ git+https://github.com/splor-mg/dpm.git@main",
+    "streamlit (>=1.53.1,<2.0.0)"
 ]
 
 
@@ -56,3 +57,7 @@ pre_test = { cmd = 'task lint', help = 'Runs linters before running the tests.' 
 test = { cmd = 'pytest -s -x -vv', help = 'Runs unit tests.' }
 post_test = { cmd = 'coverage html', help = 'Generates a coverage report after the tests.' }
 extract = { cmd = 'poetry run dpm install', help = 'Extrai recursos dos datapackages listados no arquivo data.toml.' }
+
+
+[tool.poetry.scripts]
+build-tbl-limite-liquidado = "my_pkg.transform.build_tbl_limite_vs_liquidado:main"
