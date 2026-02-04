@@ -6,7 +6,7 @@ authors = [
     {name = 'Viviane Nascimento',email = 'vivigoncalvesporto@gmail.com'}
 ]
 readme = 'README.md'
-requires-python = '>=3.13,<4.0'
+requires-python = ">=3.11,<4.0"
 dependencies = [
     'taskipy (>=1.14.1,<2.0.0)',
     "python-dotenv (>=1.2.1,<2.0.0)",
@@ -42,7 +42,15 @@ pythonpath = '.'
 addopts = '-p no:warnings'
 
 [tool.poetry]
-package-mode = false
+package-mode = true
+
+
+[[tool.poetry.packages]]
+include = "my_pkg"
+
+[project.scripts]
+build-tbl-limite-liquidado = "my_pkg.transform.build_tbl_limite_vs_liquidado:main"
+
 
 [tool.taskipy.tasks]
 list = { cmd = 'task --list', help = 'Lists all tasks.' }
@@ -55,5 +63,3 @@ post_test = { cmd = 'coverage html', help = 'Generates a coverage report after t
 extract = { cmd = 'poetry run dpm install', help = 'Extrai recursos dos datapackages listados no arquivo data.toml.' }
 
 
-[tool.poetry.scripts]
-build-tbl-limite-liquidado = "my_pkg.transform.build_tbl_limite_vs_liquidado:main"
