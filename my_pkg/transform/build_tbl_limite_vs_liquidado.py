@@ -171,10 +171,16 @@ def read_csv_robusto(path: str, prefer_utf: bool = True, sniff_sep: bool = True,
 
 def load_limite_propag_2026() -> pd.DataFrame:
     """
-    Limites do Propag 2026.
-    Arquivo: data-raw/propag_investimentos_limite_2026.csv
-    Campos relevantes: ano, uo_cod, uo_sigla, fonte_cod, ipu_cod, limite_propag (texto)
+    Limites do Propag para 2026.
+
+    Regras:
+      • Somar TUDO que vier em 'limite_propag' (independe da 'mensagem_limite').
+      • 'Roll-forward': linhas com ano == (ANO_ALVO-1) e 'mensagem_limite' contendo
+        'empenhado_YYYY' (YYYY = ANO_ALVO-1) devem migrar para o ANO_ALVO.
+      • Filtro de negócio: (fonte_cod == 89) OU (ipu_cod == 0).
     """
+    import os
+    import pandas as pd
     path = os.path.join(DATA_RAW, "propag_investimentos_limite_2026.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(
@@ -182,12 +188,12 @@ def load_limite_propag_2026() -> pd.DataFrame:
             f"Verifique se o CSV de limites está em {DATA_RAW}/"
         )
 
-    # Lê farejando separador e aceitando BOM (se houver).
+    # 1) Leitura robusta (fareja ;/, e BOM)
     df = read_csv_robusto(path, prefer_utf=True, sniff_sep=True)
 
-    # Checagem mínima de colunas
-    cols_needed = ["ano", "uo_cod", "uo_sigla",
-                   "fonte_cod", "ipu_cod", "limite_propag"]
+    # 2) Checagem mínima
+    cols_needed = ["ano", "uo_cod", "uo_sigla", "fonte_cod",
+                   "ipu_cod", "limite_propag", "mensagem_limite"]
     missing = [c for c in cols_needed if c not in df.columns]
     if missing:
         raise ValueError(
@@ -196,14 +202,25 @@ def load_limite_propag_2026() -> pd.DataFrame:
             f"Arquivo: {path}"
         )
 
-    # Filtro de negócio + ano
-    df = aplica_filtro_negocio(df)
-    df = df.loc[df["ano"] == ANO_ALVO].copy()
-
-    # Converter limite para número
+    # 3) Conversões
+    for c in ["ano", "uo_cod", "fonte_cod", "ipu_cod"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+    # Converter valores textuais em número (BR → float)
     df["limite_propag"] = parse_moeda_series(df["limite_propag"])
 
-    # Agregar no grão
+    # 4) Roll-forward do ano anterior para o ano-alvo (ex.: 2025 -> 2026)
+    ano_ant = ANO_ALVO - 1
+    mask_rf = (df["ano"] == ano_ant) & (
+        df["mensagem_limite"].astype(str).str.contains(
+            f"empenhado_{ano_ant}", case=False, na=False)
+    )
+    df.loc[mask_rf, "ano"] = ANO_ALVO
+
+    # 5) Filtro de negócio
+    df = aplica_filtro_negocio(df)
+
+    # 6) Agora sim: manter apenas ANO_ALVO e somar TUDO que sobrou em 'limite_propag'
+    df = df.loc[df["ano"] == ANO_ALVO].copy()
     grp = (
         df.groupby(["ano", "uo_cod", "fonte_cod", "ipu_cod"],
                    as_index=False, dropna=False)["limite_propag"]
