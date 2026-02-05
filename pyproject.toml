@@ -50,6 +50,9 @@ include = "my_pkg"
 
 [project.scripts]
 build-tbl-limite-liquidado = "my_pkg.transform.build_tbl_limite_vs_liquidado:main"
+build-tbl-pg1-tb2         = "my_pkg.transform.build_tbl_pagina1_tabela2:main"
+build-pg2-intervencao     = "my_pkg.transform.build_pagina2_intervencao:main"
+
 
 
 [tool.taskipy.tasks]
