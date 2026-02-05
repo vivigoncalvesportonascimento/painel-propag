@@ -54,10 +54,10 @@
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
-      "hash": "sha256:67cefd5de42bb44c1a715c21fa756f06dce8db6fc5eb1977d30077f9b90a2d2f",
-      "bytes": 411508,
+      "hash": "sha256:70199672c7ae72a066a3c70f517eee802426c00cc5b79873158a83c087ac5edd",
+      "bytes": 411827,
       "fields": 4,
-      "rows": 7050,
+      "rows": 7055,
       "dialect": {
         "csv": {
           "delimiter": ","
@@ -97,10 +97,10 @@
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
-      "hash": "sha256:1769a493f93dcbceb4d54ba37a5bc0c7f85c6c2f9e9fd6da7e618f4f6f42ef7a",
-      "bytes": 61085,
+      "hash": "sha256:9d5244129afb02cd341ef793c7f58ecea0c9fdf83d5990f7da6701a6da01bf5f",
+      "bytes": 61119,
       "fields": 4,
-      "rows": 880,
+      "rows": 881,
       "dialect": {
         "csv": {
           "delimiter": ","
@@ -212,10 +212,10 @@
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
-      "hash": "sha256:501f33c3dfff972b60863105b190ee024a2ced2d18e6452e11e9b702c48eafa3",
-      "bytes": 1011418,
+      "hash": "sha256:b51c57f8eff9839880ec9fb549057638c54cedeed206471559d7723125cbe7d4",
+      "bytes": 1011599,
       "fields": 4,
-      "rows": 9325,
+      "rows": 9327,
       "dialect": {
         "csv": {
           "delimiter": ","
@@ -314,12 +314,12 @@
       }
     }
   ],
-  "updated_at": "2026-02-04T10:08:15",
+  "updated_at": "2026-02-05T10:07:52",
   "remote": {
     "host": "raw.githubusercontent.com",
     "user": "splor-mg",
     "repo": "dados-aux-classificadores",
     "ref": "main",
-    "sha": "93e2745c3fa10cfdf0d7d370a2de8678ff4bb21e"
+    "sha": "73e58ddd1773b7ed8d38e74032014db1d5fb9292"
   }
 }
