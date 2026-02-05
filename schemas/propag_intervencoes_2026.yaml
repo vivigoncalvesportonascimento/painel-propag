@@ -9,6 +9,8 @@ fields:
     type: integer
   - name: acao_desc
     type: string
+  - name: intervencao_cod
+    type: integer
   - name: intervencao
     type: string
   - name: marcos_principais

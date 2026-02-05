@@ -1,7 +1,7 @@
-resources:
+﻿resources:
   - name: propag_intervencoes_substituicao_acordo_fte80_2026
     type: table
-    path: data-raw\propag_intervencoes_substituicao_acordo_fte80_2026.csv
+    path: .\data-raw\propag_intervencoes_substituicao_acordo_fte80_2026.csv
     scheme: file
     format: csv
     mediatype: text/csv
@@ -11,7 +11,7 @@ resources:
 
   - name: propag_investimentos_intervencoes_plano_2026
     type: table
-    path: data-raw\propag_investimentos_intervencoes_plano_2026.csv
+    path: .\data-raw\propag_investimentos_intervencoes_plano_2026.csv
     scheme: file
     format: csv
     mediatype: text/csv
@@ -21,7 +21,7 @@ resources:
 
   - name: propag_investimentos_limite_2026
     type: table
-    path: data-raw\propag_investimentos_limite_2026.csv
+    path: .\data-raw\propag_investimentos_limite_2026.csv
     scheme: file
     format: csv
     mediatype: text/csv
