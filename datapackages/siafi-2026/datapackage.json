@@ -14,10 +14,10 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:e9f03923cca086bac95728e99c9243f7ad44fb9624dd4ea72405999f1f990bb1",
-      "bytes": 790485,
+      "hash": "sha256:e5500acdf3dad8a798ad6b9032aa216fe06ea56c5cd72ea2a856e4a364bfbc43",
+      "bytes": 887157,
       "fields": 30,
-      "rows": 36925,
+      "rows": 41139,
       "schema": {
         "fields": [
           {
@@ -184,8 +184,8 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:249ba38cbbf3075069ccef10f901c6821bb03af2f43b2ec11fe497d93bf8785c",
-      "bytes": 29048,
+      "hash": "sha256:6dea9f1a43646c0ca00bd09b23d89ee264bf755b521625b8ddabf8f01457bdb6",
+      "bytes": 29122,
       "fields": 13,
       "rows": 2445,
       "schema": {
@@ -269,10 +269,10 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:e42bc4417d4240ce0dbd557e2c35d1d2adc725677c9acd8868808eb971d754f6",
-      "bytes": 64491,
+      "hash": "sha256:f127763abaf2aeddb591cd7139d51efa6580323a889f4117e4d6f8cd87fc0598",
+      "bytes": 69022,
       "fields": 19,
-      "rows": 4466,
+      "rows": 4833,
       "schema": {
         "fields": [
           {
@@ -384,10 +384,10 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:ce7f47033b5c40c83e341f2be29eead532b8fdf215cbefda8cdab8cc9a5f4b77",
-      "bytes": 38747,
+      "hash": "sha256:25c43adbd7d19e69c824f4029c846f63222cb812e4e9da4691481e30930a4d54",
+      "bytes": 39484,
       "fields": 12,
-      "rows": 1550,
+      "rows": 1592,
       "schema": {
         "fields": [
           {
@@ -464,7 +464,7 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:9b31ea541dc1d53af4ba183bf51c0310a3e439bf90cf6de9665edd07101880e3",
+      "hash": "sha256:25eab2be0d450a847ff0efaf5b3ba12ad7115d48b832424a27ad48ccb27067fd",
       "bytes": 37443,
       "fields": 22,
       "rows": 2579,
@@ -594,10 +594,10 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:98c1a66d68efcf0e247358b632e1b20bcaa1379fcb765fbb5a3023c7f639d686",
-      "bytes": 4983657,
+      "hash": "sha256:64a83b603e43ce0badb49f58f4c6d7f8642a45feae195cda07dcc6f03aaba96c",
+      "bytes": 5306062,
       "fields": 45,
-      "rows": 160452,
+      "rows": 161639,
       "schema": {
         "fields": [
           {
@@ -839,10 +839,10 @@
       "mediatype": "text/csv",
       "compression": "gz",
       "encoding": "utf-8",
-      "hash": "sha256:b9bbf9f69650182881352153c32414d9e8ee8d7757ff8ce33b256e0a473057d3",
-      "bytes": 5895,
+      "hash": "sha256:bf907dcfca1b21d6315cec5ee6b71683a913f6148090b59a760868d9ecf56825",
+      "bytes": 5978,
       "fields": 13,
-      "rows": 610,
+      "rows": 615,
       "schema": {
         "fields": [
           {
@@ -915,12 +915,12 @@
     }
   ],
   "owner_org": "secretaria-de-estado-de-planejamento-e-gestao-seplag",
-  "updated_at": "2026-02-05T10:33:12",
+  "updated_at": "2026-02-06T10:32:01",
   "remote": {
     "host": "raw.githubusercontent.com",
     "user": "splor-mg",
     "repo": "dados-armazem-siafi-2026",
     "ref": "main",
-    "sha": "efc1ecb93deceda714e2afa16a1bccf7a53b6592"
+    "sha": "cfe42ec17160d34a1b8b9d28c1505536f0d867f0"
   }
 }

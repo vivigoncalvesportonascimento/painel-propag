@@ -54,10 +54,10 @@
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
-      "hash": "sha256:70199672c7ae72a066a3c70f517eee802426c00cc5b79873158a83c087ac5edd",
-      "bytes": 411827,
+      "hash": "sha256:350b5fabb41dc67f275d049d6664c800a81f1a7450b646a04f9de77d4ff30772",
+      "bytes": 412529,
       "fields": 4,
-      "rows": 7055,
+      "rows": 7066,
       "dialect": {
         "csv": {
           "delimiter": ","
@@ -212,10 +212,10 @@
       "format": "csv",
       "mediatype": "text/csv",
       "encoding": "utf-8",
-      "hash": "sha256:b51c57f8eff9839880ec9fb549057638c54cedeed206471559d7723125cbe7d4",
-      "bytes": 1011599,
+      "hash": "sha256:60b960f62a46a9e318b9f430a221f606c575179e3c87fc29e779832d8323ee98",
+      "bytes": 1011730,
       "fields": 4,
-      "rows": 9327,
+      "rows": 9328,
       "dialect": {
         "csv": {
           "delimiter": ","
@@ -314,12 +314,12 @@
       }
     }
   ],
-  "updated_at": "2026-02-05T10:07:52",
+  "updated_at": "2026-02-06T10:06:50",
   "remote": {
     "host": "raw.githubusercontent.com",
     "user": "splor-mg",
     "repo": "dados-aux-classificadores",
     "ref": "main",
-    "sha": "73e58ddd1773b7ed8d38e74032014db1d5fb9292"
+    "sha": "aeef32463baf975be00bc0e2a4faccc131b6930c"
   }
 }
