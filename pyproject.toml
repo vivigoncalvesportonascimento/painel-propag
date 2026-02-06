@@ -58,7 +58,7 @@ build-tbl-pg1-tb2         = "my_pkg.transform.build_tbl_pagina1_tabela2:main"
 build-pg2-intervencao     = "my_pkg.transform.build_pagina2_intervencao:main"
 
 
-
+# --- iniciar os comandos com poetry run ---
 [tool.taskipy.tasks]
 list = { cmd = 'task --list', help = 'Lists all tasks.' }
 lint = { cmd = 'ruff check', help = 'Checks for good coding practices in Python.' }
@@ -68,5 +68,7 @@ pre_test = { cmd = 'task lint', help = 'Runs linters before running the tests.' 
 test = { cmd = 'pytest -s -x -vv', help = 'Runs unit tests.' }
 post_test = { cmd = 'coverage html', help = 'Generates a coverage report after the tests.' }
 extract = { cmd = 'poetry run dpm install', help = 'Extrai recursos dos datapackages listados no arquivo data.toml.' }
-
+transform = { cmd = 'python my_pkg/transform/etl.py', help = 'Processa os dados brutos e gera as tabelas finais na pasta processed_data.' }
+dashboard = { cmd = 'streamlit run streamlit/app.py', help = 'Inicia o painel de monitoramento no navegador.' }
+update = { cmd = 'task extract && task transform', help = 'Roda a extração (dpm) e a transformação (etl) em sequência.' }
 
