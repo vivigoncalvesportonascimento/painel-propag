@@ -109,14 +109,14 @@ ano;uo_cod;uo_sigla;acao_cod;acao_desc;intervencao_cod;intervencao;marcos_princi
 2026;2301;DER/MG;4284;PREVENCAO E MITIGACAO DE DANOS AMBIENTAIS;230107;Prevenção e Mitigação de Danos Ambientais;Execução do Projeto (Projeto de Recuperação de Áreas Degradadas (PRAD) Arinos - Chapada Gaúcha);600000;loa 2026
 2026;2301;DER/MG;4284;PREVENCAO E MITIGACAO DE DANOS AMBIENTAIS;230107;Prevenção e Mitigação de Danos Ambientais;Execução do Projeto (Projeto Barreira Acústica MGC-356 Bairro Santa Lúcia) ;400000;loa 2026
 2026;2301;DER/MG;4284;PREVENCAO E MITIGACAO DE DANOS AMBIENTAIS;230107;Prevenção e Mitigação de Danos Ambientais;Execução do Serviço (Programa de Proteção da fauna (Cercas e passagens));8105000;loa 2026
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Conservação da malha viária das 40ª urg's;3742687,5;ajuste Timoteo LOA 2026
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Conservação da malha viária das 40ª urg's;451259205;loa 2026
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Conservação da malha viária das 40ª urg's;17585166,65;empenhado 2025
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Conservação da malha viária das 40ª urg's (substituição fte 80);510027;substituição fte 80
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Apoio a supervisão de obras;3360705;loa 2026
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Manutenção LMG800 e MG424 - Linha verde e Complexo Cidade Administrativa;672141;loa 2026
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Manutenção LMG800 e MG424 - Linha verde e Complexo Cidade Administrativa;403216;empenhado 2025
-2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação Rotineira da Malha Viária;Realinhamento de preços do fornecimento do material betuminoso;1008211;loa 2026
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Conservação da malha viária das 40ª urg's;3742687,5;ajuste Timoteo LOA 2026
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Conservação da malha viária das 40ª urg's;451259205;loa 2026
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Conservação da malha viária das 40ª urg's;17585166,65;empenhado 2025
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Conservação da malha viária das 40ª urg's (substituição fte 80);510027;substituição fte 80
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Apoio a supervisão de obras;3360705;loa 2026
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Manutenção LMG800 e MG424 - Linha verde e Complexo Cidade Administrativa;672141;loa 2026
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Manutenção LMG800 e MG424 - Linha verde e Complexo Cidade Administrativa;403216;empenhado 2025
+2026;2301;DER/MG;4293;CONSERVACAO ROTINEIRA DA MALHA VIARIA;230108;Conservação da Malha Viária;Realinhamento de preços do fornecimento do material betuminoso;1008211;loa 2026
 2026;2301;DER/MG;4385;REABILITACAO DA MALHA VIARIA;230109;Reabilitação da Malha Viária;Reabilitação da AMG-0555 ( Entrº BR -482 (Piranga) - Presidente Bernardes);10989737;substituição fte 80
 2026;2301;DER/MG;4385;REABILITACAO DA MALHA VIARIA;230109;Reabilitação da Malha Viária;Reabilitação da MGC-259/AMG-0810 (Guanhães - Sabinópolis, Sabinópolis - Serro, Entrº MG-010 (Serro) - Alvorada de Minas);21600000;substituição fte 80
 2026;2301;DER/MG;4385;REABILITACAO DA MALHA VIARIA;230109;Reabilitação da Malha Viária;Reabilitação da AMG-1705 (Santa Cruz do Escalvado a Entrº MG-329);14700000;substituição fte 80
@@ -130,7 +130,7 @@ ano;uo_cod;uo_sigla;acao_cod;acao_desc;intervencao_cod;intervencao;marcos_princi
 2026;1511;PCMG;4060;GESTAO DAS UNIDADES POLICIAIS;151101;Renovação da frota da Polícia Civil de Minas Gerais, por meio da aquisição de veículos operacionais.;Entrega do bem na(s) unidade(s) beneficiária(s);13475950;empenhado 2025
 2026;1251;PMMG;4365;POLICIAMENTO OSTENSIVO GERAL;125101;Projeto COMAF/BOPE;Distribuição dos itens;1841679;empenhado 2025
 2026;1251;PMMG;4365;POLICIAMENTO OSTENSIVO GERAL;125102;Renovação da Frota de Helicópteros do IEF – Aquisição de nova Aeronave de Asas Rotativas;Distribuição da aeronave (Dez26/Jan27);36403361;empenhado 2025
-2026;1251;PMMG;4366;ESTRUTURACAO E MODERNIZACAO;125102;Renovação, Adequação e Diversificação da Frota Terrestre Operacional da PMMG ;Distribuição dos materiais;87041906,8;empenhado 2025
+2026;1251;PMMG;4366;ESTRUTURACAO E MODERNIZACAO;125103;Renovação, Adequação e Diversificação da Frota Terrestre Operacional da PMMG ;Distribuição dos materiais;87041906,8;empenhado 2025
 2026;1301;SEINFRA;4262;FOMENTO A INFRAESTRUTURA PUBLICA MUNICIPAL;130101;Programa de Doação de Materiais de Infraestrutura;Aquisição de Mata-Burros Metálicos;3637379;loa 2026
 2026;1301;SEINFRA;4262;FOMENTO A INFRAESTRUTURA PUBLICA MUNICIPAL;130101;Programa de Doação de Materiais de Infraestrutura;Aquisição de Vigas Metálicas;6285990;loa 2026
 2026;1301;SEINFRA;4262;FOMENTO A INFRAESTRUTURA PUBLICA MUNICIPAL;130101;Programa de Doação de Materiais de Infraestrutura;Aquisição de Bueiros Metálicos;6092723;loa 2026
